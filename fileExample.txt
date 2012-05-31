@@ -1,0 +1,11 @@
+Property: <Name>,<Description>,<Cost>,<Mortgage>,<Group>,<CostOfHouse>,<Rent>,<Rent with 1 House>,<2>,<3>,<4>,<Hotel>
+Chance:
+Income Tax:
+Luxury Tax:
+Chance Card: <Name>,<Description>,<Money>,<Space>,<isGood>,<Increment>,<Cost per person>,<Cost per house>,<Cost per hotel>,<Group>
+Community Card: <Name>,<Description>,<Money>,<Space>,<isGood>,<Increment>,<Cost per person>,<Cost per house>,<Cost per hotel>,<Group>
+
+Rememeber to check if same number of houses for each group
+Check to see if card pile is empty or not
+Check for bankrupt
+Trade feature

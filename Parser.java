@@ -22,18 +22,18 @@ public class Parser {
 		if (!currentLine.equals("Monopoly - Made by Rebant Srivastava")) { throw new NullBoardException("This is not a valid file because it does have the right first line."); }
 		onSpace = 0;
 		
-		
 		while (scanner.hasNextLine()) {
 			if (onSpace % 10 == 0) { makeBigSpace(); }
 			else {
 				currentLine = scanner.nextLine();
 				int k = currentLine.indexOf(":");
 				String whatKind = currentLine.substring(0, k);
-				if (!whatKind.equals("Property")) { makeNotProperty(whatKind); }
+				if (whatKind.contains("Card")) { makeCard(whatKind, currentLine.substring(10)); continue; }
+				else if (!whatKind.equals("Property")) { makeNotProperty(whatKind); }
 				else {
 					String[] restOfString = currentLine.substring(10).split(",");
 					if (restOfString.length < 8) { throw new NullBoardException("This is not a valid file as one of the properties" +
-																				"does not have enough information."); }
+																				" does not have enough information."); }
 					makeProperty(restOfString);
 				}
 			}
@@ -44,6 +44,17 @@ public class Parser {
 		if (onSpace != 40) { throw new NullBoardException("There are not enough spaces defined."); }
 	}
 	
+	private void makeCard(String whatKind, String cardDescription) throws NullBoardException {
+		boolean type;
+		String[] description = cardDescription.split(",");
+		if (description.length != 10) { throw new NullBoardException("This card does not have enough information."); }
+		if (whatKind.contains("Community")) { type = true; }
+		else if (whatKind.contains("Chance")) { type = false; }
+		else { throw new NullBoardException("This is not a valid type of card."); }
+		Card toAdd = new Card(type, cardDescription.split(","));
+		
+	}
+
 	public void makeBigSpace() {
 		switch(onSpace) {
 			case 0 : currentSpace = new BigSpace("Go", "Collect $200 salary as you pass.", "", ""); break;
