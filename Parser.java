@@ -23,12 +23,12 @@ public class Parser {
 		onSpace = 0;
 		
 		while (scanner.hasNextLine()) {
-			if (onSpace % 10 == 0) { makeBigSpace(); }
+			if (onSpace % 10 == 0 && !(onSpace >= Board.numOfSpaces) ) { makeBigSpace(); }
 			else {
 				currentLine = scanner.nextLine();
 				int k = currentLine.indexOf(":");
 				String whatKind = currentLine.substring(0, k);
-				if (whatKind.contains("Card")) { makeCard(whatKind, currentLine.substring(10)); continue; }
+				if (whatKind.contains("Card")) { makeCard(whatKind, currentLine.substring(k + 2)); continue; }
 				else if (!whatKind.equals("Property")) { makeNotProperty(whatKind); }
 				else {
 					String[] restOfString = currentLine.substring(10).split(",");
@@ -47,18 +47,18 @@ public class Parser {
 	private void makeCard(String whatKind, String cardDescription) throws NullBoardException {
 		boolean type;
 		String[] description = cardDescription.split(",");
-		if (description.length != 10) { throw new NullBoardException("This card does not have enough information."); }
+		if (description.length != 10) { System.out.println(whatKind); System.out.println(cardDescription); throw new NullBoardException("This card does not have enough information."); }
 		if (whatKind.contains("Community")) { type = true; }
 		else if (whatKind.contains("Chance")) { type = false; }
 		else { throw new NullBoardException("This is not a valid type of card."); }
 		Card toAdd = new Card(type, cardDescription.split(","));
-		
+		board.addCard(toAdd);
 	}
 
 	public void makeBigSpace() {
 		switch(onSpace) {
 			case 0 : currentSpace = new BigSpace("Go", "Collect $200 salary as you pass.", "", ""); break;
-			case 10 : currentSpace = new BigSpace("Jail", "Pay $50 to get out or roll doubles. " +
+			case 10 : currentSpace = new BigSpace("Jail", "Pay $50, roll doubles, or use a Get Out of Jail card to get out. " +
 					"You can spend a maximum of three turns on this space.", "Just", "Visiting"); break;
 			case 20 : currentSpace = new BigSpace("Free Parking", "If you land on this space, collect $20.", "", ""); break;
 			case 30 : currentSpace = new BigSpace("Go to Jail", "If you land on this space, you must go directly to Jail.", "", ""); break;

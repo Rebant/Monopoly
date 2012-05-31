@@ -73,6 +73,10 @@ public class Property extends Space {
 	public double[] getRent() {
 		return rent;
 	}
+	
+	public double getRentPrice() {
+		return rent[this.getNumOfHouses() + (this.hotelOwned ? 1 : 0)];
+	}
 
 
 	public String toString() {

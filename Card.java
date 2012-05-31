@@ -73,4 +73,21 @@ public class Card {
 		return group;
 	}
 	
+	/**
+	 * @return The same card except with a different reference. :p
+	 */
+	public Card createShadowCard() {
+		boolean a = this.isCommunity();
+		String b = this.getName();
+		String c = this.getDescription();
+		double d = this.getMoney();
+		int e = this.getSpace();
+		boolean f = this.isGood();
+		boolean g = this.isIncrement();
+		double h = this.getCostPerPerson();
+		double[] i = this.getCostOfHouseAndHotel();
+		int j = this.getGroup();
+		return new Card(a, b, c, d, e, f, g, h, i, j);
+	}
+	
 }

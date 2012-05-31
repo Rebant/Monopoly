@@ -14,6 +14,8 @@ public class Player {
 	public boolean bankrupt = false;
 	public int outOfJailCards = 0;
 	
+	private boolean turn;
+	
 	public Player(String name, double money, int onSpace) {
 		this.name = name;
 		this.money = money;
@@ -99,6 +101,14 @@ public class Player {
 
 	public void incrementNumJailCard() {
 		this.outOfJailCards = outOfJailCards + 1;
+	}
+	
+	public void setTurn(boolean turn) {
+		this.turn = turn;
+	}
+	
+	public boolean isTurn() {
+		return turn;
 	}
 	
 }

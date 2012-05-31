@@ -26,12 +26,16 @@ public class Board {
 	/**
 	 * @param cardType
 	 * @return Card that is drawn from the appropriate pile.
+	 * Returns the card which was drawn from the appropriate pile and then removes it from the pile.
 	 */
 	public Card removeCard(boolean cardType) {
 		int toRemove;
 		if (cardType) { toRemove = generator.nextInt(communityCards.size()); }
 		else { toRemove = generator.nextInt(chanceCards.size()); }
-		return (cardType ? communityCards.get(toRemove) : chanceCards.get(toRemove));
+		Card originalCard = (cardType ? communityCards.get(toRemove) : chanceCards.get(toRemove));
+		Card toReturn = originalCard.createShadowCard();
+		if (cardType) { communityCards.remove(toRemove); } else { chanceCards.remove(toRemove); }
+		return toReturn;
 	}
 		
 	/**

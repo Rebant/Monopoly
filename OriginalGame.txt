@@ -1,8 +1,8 @@
 Monopoly - Made by Rebant Srivastava
 Property: Mediterranean Avenue,Blah blah,60,30,1,50,2,10,30,90,160,250
-CommunityChest:
+Community Chest:
 Property: Baltic Avenue,Just Balticing,60,30,1,50,4,20,60,180,320,450
-IncomeTax:
+Income Tax:
 Property: Reading Railroad,First Railroad!,200,100,2,0,25,50,100,200
 Property: Oriental Avenue,After the railroad,100,50,3,50,6,30,90,270,400,550
 Chance:
@@ -14,7 +14,7 @@ Property: States Avenue,Other ling!,140,70,4,100,10,50,150,450,625,750
 Property: Viriginia Avenue,Brood!!!,160,80,4,100,12,60,180,450,700,900
 Property: Pennslyvania Railroad,Second Railroad!,200,100,2,0,25,50,100,200
 Property: St. James Place,Orange,180,90,6,100,14,70,200,550,750,950
-CommunityChest:
+Community Chest:
 Property: Tennessee Avenue,Two orange,180,90,6,100,14,70,200,550,750,950
 Property: New York Avenue,Free parking after,200,100,6,100,16,80,220,600,800
 Property: Kentucky Avenue,Don't know,220,110,7,150,18,90,250,700,875,1050
@@ -28,10 +28,43 @@ Property: Water Works,Utility,150,75,5,0,25,50,100,200
 Property: Marvin Gardens,And end yellow,280,140,8,150,24,120,360,850,1025,1200
 Property: Pacific Avenue,Greenbert,300,150,9,200,26,130,390,900,1100,1275
 Property: North Carolina Avenue,Dark-Green,300,150,9,200,26,130,390,900,1100,1275
-CommunityChest:
+Community Chest:
 Property: Pennsylvania Avenue,LastGreen,320,160,9,200,28,150,450,1000,1200,1400
 Property: Short Line,Last Railroad :),200,100,2,0,25,50,100,200
 Chance:
 Property: Park Place,BLUEEEEE,350,175,10,200,35,175,500,1100,1300,1500
-LuxuryTax:
+Luxury Tax:
 Property: Boardwalk,OMGRICHNESS,400,200,10,200,50,200,600,1400,1700,2000
+Community Card: Advance to Go,Go to the "Go" space and collect $200.,200,0,true,false,0,0,0,-1
+Community Card: Bank Error,A bank error in your favor results in a $75 profit for you!,75,255,true,false,0,0,0,-1
+Community Card: Doctor's Fees,Pay the doctor $50 for your yearly checkup.,-50,255,false,false,0,0,0,-1
+Community Card: Get Out of Jail Card,Keep this card to get out of jail for free.,0,255,true,false,0,0,0,-1
+Community Card: Go to Jail,Go directly to Jail - do not pass Go; do not collect $200.,0,10,false,false,0,0,0,-1
+Community Card: Birthday,Collect $10 from each player.,30,255,true,false,10,0,0,-1
+Community Card: Grand Opera Night,Collect $50 from every player for opening night seats.,0,255,true,false,50,0,0,-1
+Community Card: Income Tax Refund,Collect $20 from tax refunds.,20,255,true,false,0,0,0,-1
+Community Card: Life Insurance Matures,COllect $100 from your growing insurance.,100,255,true,false,0,0,0,-1
+Community Card: Hosital Fees,Pay the hospital $100 for fixing you up.,-100,255,false,false,0,0,0,-1
+Community Card: School Fees,Pay the school tax of $50.,-50,255,false,false,0,0,0,-1
+Community Card: Consultancy Fee,Pay $25 dollars to your shrink.,-25,255,false,false,0,0,0,-1
+Community Card: Street Repairs,You are assessed $40 per house and $115 per hotel.,0,255,false,false,0,40,115,-1
+Community Card: Beauty Contest,You have won the beauty prize! Collect $10 for your hard work,10,255,true,false,0,0,0,-1
+Community Card: Inheritance,You inherit $100.,100,255,true,false,0,0,0,-1
+Community Card: Sale of Stock,From sale of stock you get $50.,50,255,true,false,0,0,0,-1
+Community Card: Holiday Fund,Your Holiday Fund matures and you receive $100.,100,255,true,false,0,0,0,-1
+Chance Card: Advance to Go,Go to the "Go" space and collect $200.,200,0,true,false,0,0,0,-1
+Chance Card: Advance to Illinois Avenue,Go to Illinois Avenue - if you pass Go collect $200.,0,24,true,true,0,0,0,-1
+Chance Card: Advance to Utility,Go to the nearest utility. If unowned you may buy it from the Bank. If owned throw dice and pay the owner ten times the amount owned.,0,255,true,true,0,0,0,5
+Chance Card: Advance to Railroad,Go to the nearest railroad. If unowned you may buy it from the Bank. If owned pay the owner twice the amount owned.,0,255,true,true,0,0,0,2
+Chance Card: Advance to St. Charles Place,Go to St. Charles Place - if you pass Go collect $200.,0,11,true,true,0,0,0,-1
+Chance Card: Bank Dividend,The bank pays you a dividend of $50.,50,255,true,false,0,0,0,-1
+Chance Card: Get Out of Jail Card,Keep this card to get out of jail for free.,0,255,true,false,0,0,0,-1
+Chance Card: Go Back,Go back three spaces.,0,-3,false,false,0,0,0,-1
+Chance Card: Go to Jail,Go directly to Jail - do not pass Go; do not collect $200.,0,10,false,false,0,0,0,-1
+Chance Card: General Repairs,You must make general repairs on all your properties; $25 for each house and $100 per hotel.,0,255,false,false,0,25,110,-1
+Chance Card: Poor Tax,Pay the poor tax of $15.,-15,255,false,false,0,0,0,-1
+Chance Card: Advance to Reading Railroad,Go to Railroad Avenue - if you pass Go collect $200.,0,5,true,true,0,0,0,-1
+Chance Card: Advance to Boardwalk,Take a walk to Boardwalk!,0,39,true,true,0,0,0,-1
+Chance Card: Chairman of Board,You have been elected chairman of the board - pay each player $50.,0,255,false,false,50,0,0,-1
+Chance Card: Building Loan,Your building loan matures - collect $150.,150,255,true,false,0,0,0,-1
+Chance Card: Crossword Competition,You won the crossword competition - collect $100.,100,255,true,false,0,0,0,-1
