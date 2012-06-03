@@ -5,11 +5,19 @@ Luxury Tax:
 Chance Card: <Name>,<Description>,<Money>,<Space>,<isGood>,<Increment>,<Cost per person>,<Cost per house>,<Cost per hotel>,<Group>
 Community Card: <Name>,<Description>,<Money>,<Space>,<isGood>,<Increment>,<Cost per person>,<Cost per house>,<Cost per hotel>,<Group>
 
+<Name>,<Description>,<Money>,<Space>,<isGood>,<Increment>,<Cost per person>,<Cost per house>,<Cost per hotel>,<Group>
+
 Rememeber to check if same number of houses for each group
-Check to see if card pile is empty or not
 Check for bankrupt
 Trade feature
+Mortgage feature
+What if he lands on a railroad?
+What if in jail, what do?
+Keep track of how many houses there can be for each house
+To trade, must have no houses on any property in the group
+What if card comes up to take $50 from each person and someone gets bankrupt?
 
+Make effect numbers all equal to something other than numbers (Game.GOTOJAIL, Game.DREW CARD, etc.)
 
 Key
 ===

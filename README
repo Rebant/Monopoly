@@ -2,6 +2,14 @@ The Monopoly game!
 
 To do
 =====
-Make the GUI part.
-Finish the Game part.
+Check for bankrupt
+Trade feature
+What if he lands on a railroad?
+What if in jail, what do?
+Keep track of how many houses there can be for each house
+To trade, must have no houses on any property in the group
+What if card comes up to take $50 from each person and someone gets bankrupt?
+
+Make effect numbers all equal to something other than numbers (Game.GOTOJAIL, Game.DREW CARD, etc.)
+
 Make this more descriptive >.>

@@ -34,7 +34,10 @@ public class Property extends Space {
 		return mortgageCost;
 	}
 
-
+	public void setIsMortgage(boolean isMortgage) {
+		this.isMortgage = isMortgage;
+	}
+	
 	public boolean isMortgage() {
 		return isMortgage;
 	}
@@ -48,10 +51,29 @@ public class Property extends Space {
 	public int getNumOfHouses() {
 		return numOfHouses;
 	}
+	
+	public void setNumOfHouse(int numOfHouses) {
+		this.numOfHouses = numOfHouses;
+	}
+	
+	public void incrementNumOfHouses() {
+		this.numOfHouses = numOfHouses + 1;
+		ownedBy.incrementNumberOfHouses();
+	}
 
+	public void decrementNumOfHouse() {
+		this.numOfHouses = numOfHouses - 1;
+		ownedBy.decrementNumberOfHouses();
+	}
 
 	public boolean isHotelOwned() {
 		return hotelOwned;
+	}
+	
+	public void setHotelOwned(boolean hotelOwned) {
+		if (hotelOwned) { ownedBy.incrementNumberOfHotels(); }
+		else { ownedBy.decrementNumberOfHotels(); }
+		this.hotelOwned = hotelOwned;
 	}
 
 
@@ -59,6 +81,10 @@ public class Property extends Space {
 		return costOfHouse;
 	}
 
+	public void setOwned(Player player) {
+		ownedBy = player;
+		isOwned = true;
+	}
 
 	public boolean isOwned() {
 		return isOwned;

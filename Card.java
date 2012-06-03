@@ -5,7 +5,7 @@ public class Card {
 
 	public String name;
 	public String description;
-	public double money;
+	public double reward;
 	public int space; //Over 39 means not moving specifically to a space
 	public boolean isGood;
 	public boolean increment; //True means going to a particular spot
@@ -14,10 +14,10 @@ public class Card {
 	public int group; //-1 means not moving to a group
 	
 	
-	public Card(boolean isCommunity, String name, String description, double money, int space, boolean isGood, boolean increment, double costPerPerson, double[] costOfHouseAndHotel, int group) {
+	public Card(boolean isCommunity, String name, String description, double reward, int space, boolean isGood, boolean increment, double costPerPerson, double[] costOfHouseAndHotel, int group) {
 		this.name = name;
 		this.description = description;
-		this.money = money;
+		this.reward = reward;
 		this.space = space;
 		this.isCommunity = isCommunity;
 		this.isGood = isGood;
@@ -45,8 +45,8 @@ public class Card {
 		return description;
 	}
 
-	public double getMoney() {
-		return money;
+	public double getReward() {
+		return reward;
 	}
 
 	public int getSpace() {
@@ -68,6 +68,14 @@ public class Card {
 	public double[] getCostOfHouseAndHotel() {
 		return costOfHouseAndHotel;
 	}
+	
+	public double getCostPerHouse() {
+		return costOfHouseAndHotel[0];
+	}
+	
+	public double getCostPerHotel() {
+		return costOfHouseAndHotel[1];
+	}
 
 	public int getGroup() {
 		return group;
@@ -80,7 +88,7 @@ public class Card {
 		boolean a = this.isCommunity();
 		String b = this.getName();
 		String c = this.getDescription();
-		double d = this.getMoney();
+		double d = this.getReward();
 		int e = this.getSpace();
 		boolean f = this.isGood();
 		boolean g = this.isIncrement();

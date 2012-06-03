@@ -1,370 +1,377 @@
+import java.util.LinkedList;
 import java.util.Random;
 
 public class Game {
 
-	public Board board;
-	public Player[] allPlayers;
-	public double startingMoney;
-	public int numberOfPlayers;
-	int[] rolls = new int[2];
-	Random generator = new Random();
-	private Player currentPlayer;
-	private Player tradingPlayer;
-	private boolean doubles;
-	private int numOfDoubles;
-	private int turn = -1; //-1 to start
-	private boolean deciding;
-	private boolean gameOver = false;
+	Board board; //Board for this game
+	Player[] players; //Players for this game
+	private int turn = -1; //Whose turn it is; initialized at -1 to start the game.
 	
-	//Status boolean: { landedOnProperty, canBuy, isMortgaged, 
-	private boolean[] status;
+	public LinkedList<Integer> spacesMovedTo = new LinkedList<Integer>();
+	Card drawnCard;
 	
-	public Game(String filename, int numberOfPlayers, double startingMoney) throws NullBoardException {
-		this(filename);
-		this.numberOfPlayers = numberOfPlayers;
-		setPlayers();
-		setStartingMoney(startingMoney);
-		
-	}
+	Player currentPlayer; //The current player in the game
 	
+	Random generator = new Random(); //For rolling the dices
 	
-	public Game(String filename) throws NullBoardException {
-		board = new Board(filename);
-		
-		
-	}
-
-	public void resetVariable() {
-		numOfDoubles = 0;
-		deciding = false;
-		nextTurn();
-		currentPlayer = allPlayers[turn];
-		
-	}
+	//Status bits
+	private static final int onGo = 10;
+	private static final int onJail = 11;
+	private static final int onFreeParking = 12;
+	private static final int onIncome = 20;
+	private static final int onLuxury = 21;
+	private static final int drewGoToJail = 220;
+	private static final int drewGoToGo = 221;
+	private static final int drewGetOutOfJailCard = 222;
+	private static final int drewGoBack = 223;
+	private static final int drewMoveToSpace = 224;
+	private static final int drewMoveToGroup = 225;
+	private static final int drewSetSpace = 226;
+	private static final int drewReward = 227;
+	private static final int canBuy = 30;
+	private static final int isMortgaged = 31;
+	private static final int paidMoney = 32;
 	
-	private void nextTurn() {
-		turn = (turn + 1) % allPlayers.length;
-	}
+	private static final int notEnoughMoney = 1000;
+	private static final int boughtProperty = 1001;
+	private static final int doesNotOwnProperty = 1002;
+	private static final int mortgagedProperty = 1003;
+	private static final int alreadyMortgaged = 1004;
+	private static final int notMortgaged = 1005;
+	private static final int unmortgagedProperty = 1006;
+	private static final int doesNotOwnAllPropertiesInGroup = 1007;
+	private static final int hotelIsBuilt = 1008;
+	private static final int didNotBuildEvenly = 1009;
+	private static final int houseBuilt = 1010;
+	private static final int hotelBuilt = 1011;
+	private static final int mustSellEvenly = 1012;
+	private static final int noHousesToSell = 1013;
+	private static final int soldHotel = 1014;
+	private static final int soldHouse = 1015;
 	
+	private static final int playerIsBankrupt = -255;
 	
-	private void playerRollAndMove() {
-		int steps = roll();
-		if (rolls[0] == rolls[1]) { doubles = true; numOfDoubles = numOfDoubles + 1; }
-		if (numOfDoubles == 3) { System.out.println("You rolled doubles three times."); movePlayerToJail(); return; }
-		for (int i = 0; i < steps; i = i + 1) {
-			movePlayer();
-		}
-	}
-	
+	/* ROLL STUFF */
 	/**
-	 * @param currentPlayer
-	 * Moves 'currentPlayer' one space forward and checks to see if the player is on the
-	 * "Go" space and adds $200 to 'currentPlayer' money
-	 */
-	public void movePlayer() {
-		currentPlayer.incrementSpace();
-		if (currentPlayer.getOnSpace() == 0) { currentPlayer.addMoney(200); }
-	}
-	
-	/**
-	 * @param currentPlayer
-	 * @param toSpace
-	 * Moves 'currentPlayer' to the space specified.
-	 */
-	public void movePlayer(int toSpace) {
-		currentPlayer.setSpace(toSpace);
-	}
-	
-	public void movePlayerToSpace(int spaceToLandOn) {
-		while (currentPlayer.getOnSpace() != spaceToLandOn) {
-			movePlayer();
-		}
-	}
-	
-	public void movePlayerToGroup(int group) {
-		int onGroup = -1;
-		while (onGroup != group) {
-			movePlayer();
-			Space currentSpace = board.getSpace(currentPlayer.getOnSpace());
-			if (!(currentSpace instanceof Property)) { onGroup = -1; continue; }
-			onGroup = ((Property) currentSpace).getGroup();
-		}
-	}
-	
-	/**
-	 * @param currentPlayer
-	 * Moves the player to jail.
-	 */
-	public void movePlayerToJail() {
-		currentPlayer.setSpace(10);
-		currentPlayer.setInJail(true);
-		currentPlayer.setTimeInJail(0);
-		System.out.println("You were put in jail");
-	}
-	
-	public void activateEffect() {
-		Space currentSpace = board.getSpace(currentPlayer.getOnSpace());
-		//Big space stuff
-		if (currentSpace instanceof BigSpace) {
-			if (currentSpace.getName().equals("Go to Jail")) { movePlayerToJail(); return; }
-		}
-		//Not a property stuff
-		if (currentSpace instanceof NotProperty) {
-			String whatType = ((NotProperty) currentSpace).getType().toString();
-			if (whatType.equals("Chance")) { activateEffect(drawCard(false)); return; }
-			if (whatType.equals("CommunityChest")) { activateEffect(drawCard(true)); return; }
-			if (whatType.equals("IncomeTax")) { if (currentPlayer.getMoney() < 200) { currentPlayer.addMoney(-currentPlayer.getMoney() * 0.10); } else { currentPlayer.addMoney(-200); } return; } //***TODO: Decide which to pay.
-			if (whatType.equals("LuxuryTax")) { currentPlayer.addMoney(-75); return; }
-		}
-		// [ Player is on a property - let the cases begin!]
-		deciding = true;
-	}
-	
-	/**
-	 * @param currentPlayer
-	 * @param drawnCard
-	 * Activate effect of a card.
-	 */
-	public void activateEffect(Card drawnCard) {
-		double money = drawnCard.getMoney() + (getNumberOfPlayers() - 1)*drawnCard.getCostPerPerson() +
-				currentPlayer.getNumberOfHouses()*drawnCard.getCostOfHouseAndHotel()[0] +
-				currentPlayer.getNumberOfHotels()*drawnCard.getCostOfHouseAndHotel()[1];
-		currentPlayer.addMoney(money);
-		
-		//***TODO: What about when the person is supposed to go to a railroad/utility? Cost = 2x or 4x.
-
-		//Subtract cost from each player if needed
-		if (drawnCard.getCostPerPerson() > 0) {
-			for (int i = 0; i < allPlayers.length; i = i + 1) { if (allPlayers[i] == currentPlayer) { continue; } allPlayers[i].addMoney(-drawnCard.getCostPerPerson());	}
-		}
-		
-		if (drawnCard.getName().equals("Get Out of Jail Card")) { currentPlayer.incrementNumJailCard(); }
-		
-		//Move the player to the appropriate space according to some cases:
-		//Case 1: Increment is true and space is valid - move to a space
-		if (drawnCard.isIncrement() && (drawnCard.getSpace() < 40 && drawnCard.getSpace() >= 0)) {
-			movePlayerToSpace(drawnCard.getSpace());
-		}
-		//Case 2: Increment is true and space is not valid and group is valid - move to a group
-		if (drawnCard.isIncrement() && drawnCard.getSpace() > 40 && drawnCard.getGroup() >= 0) {
-			movePlayerToGroup(drawnCard.getGroup());
-		}
-		//Case 3: Increment is false and space is valid - set player to a specific space
-		if (!drawnCard.isIncrement() && drawnCard.getSpace() < 40) {
-			if (drawnCard.getName().equals("Go to Jail")) { movePlayerToJail(); checkToReshuffle(); return; }
-			else { movePlayer(drawnCard.getSpace()); }
-			//Check to see if in jail or not:
-		}
-		checkToReshuffle();
-
-		activateEffect();
-
-	}
-	
-	public void decidingWhatToDo() {
-		Property theProperty = (Property) board.getSpace(currentPlayer.getOnSpace());
-		//Case 1: Player is on a property which is not owned - player can buy it or auction the land
-		if (!theProperty.isOwned()) {
-			System.out.println("You can buy or auction this piece of land.");
-			//***TODO: HOW THE FUCK DO WE DO THIS NOW!?!? TURN BASED...
-		}
-		//Case 2: Player is on a property which is owned
-		if (theProperty.isOwned()) {
-			//Case 2a: The property is mortgaged
-			if (theProperty.isMortgage()) { System.out.println("The property is mortgaged so you do not need to pay rent."); }
-			//Case 2b: The property is not mortgaged
-			else { System.out.println("You must pay rent for this land equal to: " + theProperty.getRentPrice()); }
-		}
-	}
-	
-	public void build() {
-		System.out.println("What would you like to build houses and/or hotels on?");
-		
-	}
-	
-	public void mortgage() {
-		System.out.println("Which property would you like to mortgage?");
-		
-	}
-
-	public void jailMode() {
-		//See if the user has been in jail for three turns
-		if (currentPlayer.getTimeInJail() == 3) { currentPlayer.setInJail(false); return; }
-
-		currentPlayer.incrementTimeInJail();
-		
-		//***TODO: Tell user to roll doubles or pay 50 or use the out of jail card to get out
-		
-	}
-		
-	/**
-	 * @param pile True for Community Chest, false for Chance
-	 * Draw a card from the pile specified by 'pile' and perform the appropriate actions as stated on the card.
-	 */
-	private Card drawCard(boolean pile) {
-		return board.removeCard(pile);
-	}
-	
-	/**
-	 * Reshuffles cards if there are no more cards in a certain pile.
-	 */
-	public void checkToReshuffle() {
-		if (board.numberOfCommunityCards() == 0) { board.reshuffleCards(true); }
-		if (board.numberOfChanceCards() == 0) { board.reshuffleCards(false); }
-	}
-	
-	/**
-	 * @return Rolls two dice and stores the result into "rolls"
+	 * @return The sum of the dice rolled by the player.
+	 * Returns -1 if the current player has rolled three doubles.
+	 * Note: What the player rolls is stored in the player's object.
 	 */
 	public int roll() {
-		rolls[0] = rollDice();
-		rolls[1] = rollDice();
-		return rolls[0] + rolls[1];
+		int roll1 = rollDice();
+		int roll2 = rollDice();
+		if (roll1 == roll2) { currentPlayer.incrementNumOfDoubles(); currentPlayer.setRolledDoubles(true); }
+		else { currentPlayer.setRolledDoubles(false); }
+		if (currentPlayer.getNumOfDoubles() == 3) { return -1; }
+		return roll1 + roll2;
 	}
 	
-	/**
-	 * @return One dice roll
-	 */
 	public int rollDice() {
 		return generator.nextInt(6) + 1;
 	}
 	
+	
+	/* MOVE STUFF */
 	/**
-	 * @param n
-	 * @param player
-	 * Add a player to position n.
+	 * @return The space the player is on after moving one spot.
+	 * Moves the player one spot forward and then returns which
+	 * spot the player is on. Also puts each space the player is
+	 * on into the LinkedList for reference.
+	 * Adds 200 to currentPlayer if the current space is 0
+	 * ("Go" space).
 	 */
-	public void addPlayer(int n, Player player) {
-		allPlayers[n] = player;
+	public int movePlayer() {
+		currentPlayer.incrementSpace();
+		spacesMovedTo.add(currentPlayer.getOnSpace());
+		if (currentPlayer.getOnSpace() == 0) { currentPlayer.addMoney(200); }
+		return currentPlayer.getOnSpace();
 	}
 	
-	public void createPlayers(Player[] players) {
-		for (int i = 0; i < players.length; i = i + 1) {
-			allPlayers[i] = players[i];
+	/**
+	 * @param space Space to move the player to.
+	 * Moves the player to a certain space.
+	 */
+	public void setPlayerSpace(int space) {
+		currentPlayer.setSpace(space);
+		spacesMovedTo.add(space);
+	}
+	
+	/**
+	 * @param space Space to move the player to.
+	 * Moves the player to the space specified by moving the player
+	 * one space at a time through the movePlayer() method.
+	 */
+	public void movePlayerToSpace(int space) {
+		while (movePlayer() != space) { /* Dummy stuff. */ }
+	}
+	
+	/**
+	 * @param group Group to move the player to.
+	 * Moves the player to the group specified by moving the player
+	 * one space at a time through the movePlayer() method.
+	 */
+	public void movePlayerToGroup(int group) {
+		boolean onGroup = false;
+		while (!onGroup) {
+			movePlayer();
+			if (board.getSpace(currentPlayer.getOnSpace()) instanceof Property) {
+				Property prop = (Property) board.getSpace(currentPlayer.getOnSpace());
+				if (prop.getGroup() == group) { onGroup = true; }
+			}
 		}
 	}
 	
-	public void setNumberOfPlayers(int numberOfPlayers) {
-		this.numberOfPlayers = numberOfPlayers;
+	/**
+	 * @return The space the player is on after moving backwards once.
+	 * Moves the player one spot backward and then returns which
+	 * spot the player is on. Also puts each space the player is
+	 * on into the LinkedList for reference.
+	 */
+	public int movePlayerBackwards() {
+		currentPlayer.decrementSpace();
+		spacesMovedTo.add(currentPlayer.getOnSpace());
+		return currentPlayer.getOnSpace();
 	}
 	
-	public void setPlayers(int numberOfPlayers) {
-		allPlayers = new Player[numberOfPlayers];
-	}
-	
-	public void setPlayers() {
-		this.setPlayers(numberOfPlayers);
-	}
-	
-	public int getNumberOfPlayers() {
-		return allPlayers.length;
-	}
-	
-	public void setStartingMoney(double startingMoney) {
-		this.startingMoney = startingMoney;
-	}
-	
-	public boolean isGameOver() {
-		return gameOver;
-	}
-
-
-	public Player getTradingPlayer() {
-		return tradingPlayer;
-	}
-
-
-	public void setTradingPlayer(Player tradingPlayer) {
-		this.tradingPlayer = tradingPlayer;
-	}
-
-
-	public boolean isDoubles() {
-		return doubles;
-	}
-
-
-	public void setDoubles(boolean doubles) {
-		this.doubles = doubles;
-	}
-
-
-	public boolean isDeciding() {
-		return deciding;
-	}
-
-
-	public void setDeciding(boolean deciding) {
-		this.deciding = deciding;
-	}
-
-
-	public boolean[] getStatus() {
-		return status;
-	}
-
-
-	public void setStatus(boolean[] status) {
-		this.status = status;
-	}
-	
-	public void setStatus(int n, boolean status) {
-		this.status[n] = status;
+	/**
+	 * Puts the player in jail.
+	 */
+	public void putInJail() {
+		currentPlayer.setSpace(10);
+		currentPlayer.setInJail(true);
 	}
 	
 	
+	/* ACTIVATE EFFECT STUFF */
+	/**
+	 * @return Status bit for what happened from the effect.
+	 * Activates the effect based on the player's current space and then
+	 * returns the appropriate status bit for what happened from the effect.
+	 */
+	public int activateEffect() {
+		int playerOnSpace = currentPlayer.getOnSpace();
+		Space currentSpace = board.getSpace(playerOnSpace);
+		if (currentSpace instanceof BigSpace) { return activateEffect((BigSpace) currentSpace); }
+		else if (currentSpace instanceof NotProperty) { return activateEffect((NotProperty) currentSpace); }
+		else { return activateEffect((Property) currentSpace); }
+	}
+	
+	/**
+	 * @param bigSpace The BigSpace the player is on.
+	 * @return The appropriate status bit for what happens to the player.
+	 */
+	public int activateEffect(BigSpace bigSpace) {
+		if (bigSpace.getName().equals("Go")) { return Game.onGo; }
+		if (bigSpace.getName().equals("Jail")) { return Game.onJail; }
+		if (bigSpace.getName().equals("Free Parking")) { return Game.onFreeParking; }
+		putInJail(); return 13;
+	}
+	
+	/**
+	 * @param notProperty The NotPlayer the player is on.
+	 * @return The appropriate status bit for what happens to the player.
+	 */
+	public int activateEffect(NotProperty notProperty) {
+		if (notProperty.getName().equals("Income Tax")) { currentPlayer.addMoney(-75); return Game.onIncome; }
+		if (notProperty.getName().equals("Luxury Tax")) { currentPlayer.addMoney(-200); return Game.onLuxury; } //***TODO: Decide which one the player wants to play
+		// [ Player landed on Chance or Community Chest ]
+		if (notProperty.getName().equals("Chance")) { return drawCard(false); }
+		return drawCard(true);
+	}
+
+	/**
+	 * @param cardType True for Community, false for Chance.
+	 * @return The appropriate status bit for what happens to the player.
+	 */
+	public int drawCard(boolean cardType) {
+		drawnCard = board.removeCard(cardType);
+		
+		if (drawnCard.getName().equals("Go to Jail")) { putInJail(); return Game.drewGoToJail; }
+		if (drawnCard.getName().equals("Advance to Go")) { currentPlayer.addMoney(200); currentPlayer.setSpace(0); return Game.drewGoToGo; }
+		if (drawnCard.getName().equals("Get Out of Jail Card")) { currentPlayer.incrementNumJailCard(); return Game.drewGetOutOfJailCard; }
+		if (drawnCard.getName().equals("Go Back")) { for (int i = 0; i < Math.abs(drawnCard.getSpace()); i = i + 1) { movePlayerBackwards(); } return Game.drewGoBack; }
+		
+		if (drawnCard.isIncrement()) {
+			int spaceOrGroup = drawnCard.getSpace();
+			if (drawnCard.getSpace() < 40) { movePlayerToSpace(spaceOrGroup); return Game.drewMoveToSpace; }
+			movePlayerToGroup(spaceOrGroup); return Game.drewMoveToGroup;
+		}
+		
+		if (drawnCard.isIncrement() && drawnCard.getSpace() < 40) { this.setPlayerSpace(drawnCard.getSpace()); return Game.drewSetSpace; }
+		
+		double totalReward =
+				drawnCard.getReward() + ((double) players.length) * drawnCard.getCostPerPerson() +
+				((double) currentPlayer.getNumberOfHouses()) * drawnCard.getCostPerHouse() +
+				((double) currentPlayer.getNumberOfHotels()) * drawnCard.getCostPerHotel();
+		//If this affects each player
+		if (drawnCard.getCostPerPerson() != 0) {
+			double costPerPerson = drawnCard.getCostPerPerson();
+			for (int i = 0; i < players.length; i = i + 1) {
+				if (costPerPerson < 0 && players[i] != currentPlayer) { players[i].addMoney(costPerPerson); }
+				else if (drawnCard.getCostPerPerson() > 0 && players[i] != currentPlayer) { players[i].addMoney(costPerPerson); }
+			}
+		}
+		currentPlayer.addMoney(totalReward); return Game.drewReward;
+	}
+
+	
+	/**
+	 * @param property What property the effect is activated on.
+	 * @return The appropriate status bit for what happens to the player.
+	 */
+	public int activateEffect(Property property) {
+		Property theProperty = (Property) board.getSpace(currentPlayer.getOnSpace());
+		if (!theProperty.isOwned()) { return Game.canBuy; }
+		if (theProperty.isMortgage()) { return Game.isMortgaged; }
+		currentPlayer.addMoney(property.getRentPrice()); return Game.paidMoney;
+	}
+	
+	/* PROPERTY STUFF */
+	/**
+	 * @return The appropriate status bit for if the player bought the property or not.
+	 * Precondition: The space the current player is on must be a property.
+	 */
+	public int buyProprety() {
+		int currentSpace = currentPlayer.getOnSpace();
+		Property currentProperty = (Property) board.getSpace(currentSpace);
+		if (currentPlayer.getMoney() < currentProperty.getCostToBuy()) { return Game.notEnoughMoney; }
+		currentPlayer.addMoney(-currentProperty.getCostToBuy());
+		currentPlayer.addProperty(currentSpace);
+		currentProperty.setOwned(currentPlayer);
+		return Game.boughtProperty;
+	}
+	
+	/**
+	 * @param propertySpace Property to mortgage.
+	 * @return The appropriate status bit for if the player mortgaged the property or not.
+	 */
+	public int mortgagedProperty(int propertySpace) {
+		if (!currentPlayer.ownsProperty(propertySpace)) { return Game.doesNotOwnProperty; }
+		Property currentProperty = (Property) board.getSpace(propertySpace);
+		if (currentProperty.isMortgage()) { return Game.alreadyMortgaged; }
+		currentProperty.setIsMortgage(true);
+		currentPlayer.addMoney(currentProperty.getMortgageCost());
+		return Game.mortgagedProperty;
+	}
+	
+	/**
+	 * @param propertySpace Property to unmortgage.
+	 * @return The appropriate status bit for if the player mortgaged the property or not.
+	 * ***TODO: Duplicate code as mortgagedProperty!
+	 */
+	public int unmortgageProperty(int propertySpace) {
+		if (!currentPlayer.ownsProperty(propertySpace)) { return Game.doesNotOwnProperty; }
+		Property currentProperty = (Property) board.getSpace(propertySpace);
+		if (!currentProperty.isMortgage()) { return Game.notMortgaged; }
+		double costToUnmortgage = currentProperty.getMortgageCost() * 1.10;
+		if (currentPlayer.getMoney() < costToUnmortgage) { return Game.notEnoughMoney; }
+		currentPlayer.addMoney(-costToUnmortgage);
+		currentProperty.setIsMortgage(false);
+		return Game.unmortgagedProperty;
+	}
+	
+	/**
+	 * @param propertySpace Property at which to build the house.
+	 * @return The appropriate status bit for what happened while building the house.
+	 */
+	public int buildHouse(int propertySpace) {
+		if (!currentPlayer.ownsProperty(propertySpace)) { return Game.doesNotOwnProperty; }
+		Property currentProperty = (Property) board.getSpace(propertySpace);
+		int currentGroup = currentProperty.getGroup();
+		Property[] allPropertiesInGroup = board.getGroup(currentGroup);
+		int numHouses[] = new int[allPropertiesInGroup.length];
+		int maxHouses = -1;
+		//Check to see that all the properties in the group are owned by the current player
+		for (int i = 0; i < allPropertiesInGroup.length; i = i + 1) {
+			if (allPropertiesInGroup[i].getOwnedBy() != currentPlayer) { return Game.doesNotOwnAllPropertiesInGroup; }
+			numHouses[i] = allPropertiesInGroup[i].getNumOfHouses();
+			if (numHouses[i] > maxHouses) { maxHouses = numHouses[i]; }
+		}
+		if (currentProperty.isHotelOwned()) { return Game.hotelIsBuilt; }
+		//Check to see that the house is being built on the property with the least number of houses
+		//or that all the houses have the same number of houses
+		if (currentProperty.getNumOfHouses() == maxHouses) {
+			for (int i = 0; i < numHouses.length; i = i + 1) { if (numHouses[i] != maxHouses) { return Game.didNotBuildEvenly; } }
+		}
+		double costOfHouse = currentProperty.getCostOfHouse();
+		if (currentPlayer.getMoney() < costOfHouse) { return Game.notEnoughMoney; }
+		currentPlayer.addMoney(-costOfHouse); 
+		//Check to see if building hotel
+		if (currentProperty.getNumOfHouses() == Board.maxNumHouses) {
+			currentProperty.setHotelOwned(true); return Game.hotelBuilt;
+		}
+		currentProperty.incrementNumOfHouses(); return Game.houseBuilt;
+	}
+	
+	/**
+	 * @param propertySpace Property to sell a house from.
+	 * @return The appropriate status bit for what happens when the player tries to sell a house.
+	 */
+	public int sellHouse(int propertySpace) {
+		if (!currentPlayer.ownsProperty(propertySpace)) { return Game.doesNotOwnProperty; }
+		Property currentProperty = (Property) board.getSpace(propertySpace);
+		int currentGroup = currentProperty.getGroup();
+		Property[] allPropertiesInGroup = board.getGroup(currentGroup);
+		int numHouses[] = new int[allPropertiesInGroup.length];
+		int maxHouses = -1;
+		//Check to see that all the properties in the group are owned by the current player
+		for (int i = 0; i < allPropertiesInGroup.length; i = i + 1) {
+			if (allPropertiesInGroup[i].getOwnedBy() != currentPlayer) { return Game.doesNotOwnAllPropertiesInGroup; }
+			numHouses[i] = allPropertiesInGroup[i].getNumOfHouses() + (allPropertiesInGroup[i].isHotelOwned() ? 1 : 0);
+			if (numHouses[i] > maxHouses) { maxHouses = numHouses[i]; }
+		}
+		if (maxHouses == 0) { return Game.noHousesToSell; }
+		//Check to see that the house being demolished is from the one with the maximum number
+		if (currentProperty.getNumOfHouses() != maxHouses) { return Game.mustSellEvenly; }
+		if (currentProperty.isHotelOwned()) {
+			currentProperty.setHotelOwned(false); return Game.soldHotel;
+		}
+		currentProperty.decrementNumOfHouse(); return Game.soldHouse;
+	}
 	
 	
+	/* BANKRUPT STUFF */
+	public void declareBankrupt() {
+		//***TODO: declareBankrupt for this person.
+		nextTurn();
+	}
 	
+	/**
+	 * @return True if the current player is bankrupt; false otherwise.
+	 * Checks to see if the player is bankrupt. If so, then the player will
+	 * have this field modified appropriately.
+	 * TODO: Check AFTER activate effect
+	 */
+	public boolean isBankrupt() {
+		if (currentPlayer.getMoney() < 0) { currentPlayer.setBankrupt(true); return true; }
+		return false;
+	}
+
+	public boolean anyBankrupt() {
+		//***TODO: This
+		return false;
+	}
 	
+	/* TURN STUFF */
+	public void nextTurn() {
+		do {
+			incrementTurn();
+		}
+		while (!players[getTurn()].getBankrupt());
+	}
 	
+	//***TODO: Add the stuff to figure out whose turn, etc.
+	public int getTurn() {
+		return turn;
+	}
+
+	public void setTurn(int turn) {
+		this.turn = turn;
+	}
 	
+	public void incrementTurn() {
+		turn = (turn + 1) % players.length;
+	}
 	
-	
-	
-	
-	
-	
-	
-	
-//	//***TODO: Maybe this should go in the Monopoly class? It makes sense to do so...
-//	public void play() {
-//		
-//		while (!gameOver) {
-//			int currentTurn = -1;
-//			for (int i = 0; i < allPlayers.length; i = i + 1) { if(allPlayers[i].isTurn()) { currentTurn = i; break; } } //Find the player
-//			turn(allPlayers[currentTurn]);
-//			nextPlayer();
-//		}
-//	}
-//	
-//	private void nextTurn() {
-//		if (turn + 1 == allPlayers.length) { moves = moves + 1; }
-//		turn = (turn + 1) % allPlayers.length;
-//	}
-//	
-//	private void nextPlayer() {
-//		nextTurn();
-//		for (int i = 0; i < allPlayers.length; i = i + 1) {
-//			allPlayers[i].setTurn(i == turn && !allPlayers[i].getBankrupt());
-//		}		
-//	}
-//	
-//	public void turn(Player currentPlayer) {
-//		boolean rollAgain = false; int numOfDoubles = 0;
-//		do {
-//			if (currentPlayer.getInJail()) { jailMode(currentPlayer); if (currentPlayer.getInJail()) { return; } } //If still in jail, done.
-//			int steps = roll();
-//			if (rolls[0] == rolls[1]) {
-//				if (numOfDoubles != 2) { rollAgain = true; numOfDoubles = numOfDoubles + 1; }
-//				else { rollAgain = false; movePlayerToJail(currentPlayer); }
-//			}
-//			for (int i = 0; i < steps; i = i + 1) {
-//				movePlayer(currentPlayer);
-//			}
-//			activateEffect(currentPlayer);
-//		}
-//		while (rollAgain);
-//	}
 	
 }
