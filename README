@@ -2,12 +2,16 @@ The Monopoly game!
 
 To do
 =====
+Rememeber to check if same number of houses for each group
 Check for bankrupt
+Make sure everything works (test)
 Trade feature
 What if he lands on a railroad?
 What if in jail, what do?
 Keep track of how many houses there can be for each house
 To trade, must have no houses on any property in the group
+Double rent for owning all properties
+Bankrupt stuff
 What if card comes up to take $50 from each person and someone gets bankrupt?
 
 Make effect numbers all equal to something other than numbers (Game.GOTOJAIL, Game.DREW CARD, etc.)

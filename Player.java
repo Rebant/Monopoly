@@ -6,7 +6,7 @@ public class Player {
 	public String name;
 	public double money;
 	public int onSpace;
-	public HashSet<Integer> spacesOwned;
+	public HashSet<Integer> spacesOwned = new HashSet<Integer>();
 	public boolean inJail; //***TODO: Put this in a better spot.
 	public int timeInJail;
 	public int numberOfHouses;
@@ -73,16 +73,26 @@ public class Player {
 	}
 
 	public boolean ownsProperty(int prop) {
+		if (spacesOwned == null) { return false; }
 		if (spacesOwned.contains(prop)) { return true; }
 		return false;
 	}
 	
-	public void addMoney(double money) {
-		this.money = money + money;
+	public String getStats() { //***TODO: Make onSpace be the name of the property.
+		return "You have " + getMoney() + " dollars and own " + (spacesOwned == null ? 0 : spacesOwned.size()) + " properties. " +
+			"You are currently on " + onSpace + ". Finally, you own " + getOutOfJailCards() + " 'Out of Jail' cards.";
+	}
+	
+	public void addMoney(double moneyToAdd) {
+		money = money + moneyToAdd;
 	}
 	
 	public void setName(String name) {
 		this.name = name;
+	}
+	
+	public String getName() {
+		return name;
 	}
 	
 	public void setMoney(double money) {
@@ -94,7 +104,7 @@ public class Player {
 	}
 
 	public void setInJail(boolean inJail) {
-		if (inJail) { timeInJail = 0; }
+		timeInJail = 0;
 		this.inJail = inJail;
 	}
 
@@ -148,8 +158,16 @@ public class Player {
 		return numberOfHotels;
 	}
 
+	public int getOutOfJailCards() {
+		return outOfJailCards;
+	}
+	
 	public void incrementNumJailCard() {
-		this.outOfJailCards = outOfJailCards + 1;
+		outOfJailCards = outOfJailCards + 1;
+	}
+	
+	public void decrementNumJailCard() {
+		outOfJailCards = outOfJailCards - 1;
 	}
 	
 	public void setTurn(boolean turn) {

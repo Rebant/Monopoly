@@ -10,6 +10,7 @@ public class Property extends Space {
 	public double costOfHouse;
 	public boolean isOwned;
 	public Player ownedBy;
+	public boolean auction = false;
 	
 	public double[] rent;
 	
@@ -103,7 +104,23 @@ public class Property extends Space {
 	public double getRentPrice() {
 		return rent[this.getNumOfHouses() + (this.hotelOwned ? 1 : 0)];
 	}
-
+	
+	/**
+	 * @param payer Player who is paying the owner.
+	 * Payer pays the rent owed to the person who owns this property.
+	 */
+	public void payRent(Player payer) {
+		payer.addMoney(-getRentPrice());
+		ownedBy.addMoney(getRentPrice());
+	}
+	
+	public void setAuctionMode() {
+		auction = true;
+	}
+	
+	public void doneAuction() {
+		auction = false;
+	}
 
 	public String toString() {
 		//<Name>,<Description>,<Cost>,<Mortgage>,<Group>,<CostOfHouse>,<Rent>,<Rent with 1 House>,<2>,<3>,<4>,<Hotel>

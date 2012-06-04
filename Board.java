@@ -16,6 +16,11 @@ public class Board {
 	public Property[][] groups; //Row corresponds to which group the properties in that row are in.
 	public Random generator = new Random();
 	
+	public Board(String filename) throws NullBoardException {
+		parser = new Parser(filename, this);
+		setupGroups();
+	}
+	
 	public void setSpaces(int space, Space n) {
 		allSpaces[space] = n;
 	}
@@ -55,11 +60,6 @@ public class Board {
 			
 	}
 
-	public Board(String filename) throws NullBoardException {
-		parser = new Parser(filename, this);
-		setupGroups();
-	}
-
 	public Space getSpace(int onSpace) {
 		return allSpaces[onSpace];
 	}
@@ -77,6 +77,7 @@ public class Board {
 			numberOfDifferentGroups.add(currentProperty.getGroup());
 		}
 		groups = new Property[numberOfDifferentGroups.size()][];
+		System.out.println("There are " + numberOfDifferentGroups.size() + " groups.");
 		for (int i = 0; i < groups.length; i = i + 1) { //Which group
 			int j = 0; //Which column in row we are on
 			for (int k = 0; i < allSpaces.length; i = i + 1) {
@@ -90,6 +91,7 @@ public class Board {
 	}
 	
 	public Property[] getGroup(int group) {
+		System.out.println("the size is: " + groups[group].length);
 		return groups[group];
 	}
 	

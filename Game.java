@@ -9,47 +9,80 @@ public class Game {
 	
 	public LinkedList<Integer> spacesMovedTo = new LinkedList<Integer>();
 	Card drawnCard;
+	private Player paidMoneyTo;
+	boolean anotherEffect; //Activate another effect if this is true
 	
 	Player currentPlayer; //The current player in the game
+	double startingMoney;
 	
 	Random generator = new Random(); //For rolling the dices
 	
 	//Status bits
-	private static final int onGo = 10;
-	private static final int onJail = 11;
-	private static final int onFreeParking = 12;
-	private static final int onIncome = 20;
-	private static final int onLuxury = 21;
-	private static final int drewGoToJail = 220;
-	private static final int drewGoToGo = 221;
-	private static final int drewGetOutOfJailCard = 222;
-	private static final int drewGoBack = 223;
-	private static final int drewMoveToSpace = 224;
-	private static final int drewMoveToGroup = 225;
-	private static final int drewSetSpace = 226;
-	private static final int drewReward = 227;
-	private static final int canBuy = 30;
-	private static final int isMortgaged = 31;
-	private static final int paidMoney = 32;
+	public static final int onGo = 100;
+	public static final int onJail = 101;
+	public static final int onFreeParking = 102;
+	public static final int onGoToJail = 103;
+	public static final int onIncome = 200;
+	public static final int onLuxury = 201;
+	public static final int drewGoToJail = 2020;
+	public static final int drewGoToGo = 2021;
+	public static final int drewGetOutOfJailCard = 2022;
+	public static final int drewGoBack = 2023;
+	public static final int drewMoveToSpace = 2024;
+	public static final int drewMoveToGroup = 2025;
+	public static final int drewSetSpace = 2026;
+	public static final int drewReward = 2027;
+	public static final int canBuy = 300;
+	public static final int isMortgaged = 301;
+	public static final int ownsProperty = 302;
+	public static final int paidMoney = 303;
 	
-	private static final int notEnoughMoney = 1000;
-	private static final int boughtProperty = 1001;
-	private static final int doesNotOwnProperty = 1002;
-	private static final int mortgagedProperty = 1003;
-	private static final int alreadyMortgaged = 1004;
-	private static final int notMortgaged = 1005;
-	private static final int unmortgagedProperty = 1006;
-	private static final int doesNotOwnAllPropertiesInGroup = 1007;
-	private static final int hotelIsBuilt = 1008;
-	private static final int didNotBuildEvenly = 1009;
-	private static final int houseBuilt = 1010;
-	private static final int hotelBuilt = 1011;
-	private static final int mustSellEvenly = 1012;
-	private static final int noHousesToSell = 1013;
-	private static final int soldHotel = 1014;
-	private static final int soldHouse = 1015;
+	public static final int notEnoughMoney = 1000;
+	public static final int boughtProperty = 1001;
+	public static final int doesNotOwnProperty = 1002;
+	public static final int mortgagedProperty = 1003;
+	public static final int alreadyMortgaged = 1004;
+	public static final int notMortgaged = 1005;
+	public static final int unmortgagedProperty = 1006;
+	public static final int doesNotOwnAllPropertiesInGroup = 1007;
+	public static final int hotelIsBuilt = 1008;
+	public static final int didNotBuildEvenly = 1009;
+	public static final int houseBuilt = 1010;
+	public static final int hotelBuilt = 1011;
+	public static final int mustSellEvenly = 1012;
+	public static final int noHousesToSell = 1013;
+	public static final int soldHotel = 1014;
+	public static final int soldHouse = 1015;
 	
+	public static final int gotOutOfJail = -100;
+	public static final int doNotHaveJailCard = -101;
+	public static final int stillInJail = -102;
+	
+	public static final int nop = -9999;
+	public static final int notAValidOption = -3000;
 	private static final int playerIsBankrupt = -255;
+	private static boolean gameWon = false;
+	
+	public Game(String filename) throws NullBoardException {
+		board = new Board(filename);
+	}
+	
+	public Game(String filename, int numOfPlayers, double startingMoney) throws NullBoardException {
+		this(filename);
+		setPlayers(numOfPlayers, startingMoney);
+	}
+	
+	public void setPlayers(int numOfPlayers, double startingMoney) {
+		players = new Player[numOfPlayers];
+		this.startingMoney = startingMoney;
+	}
+	
+	public void addPlayer(String name) {
+		for (int i = 0; i < players.length; i = i + 1) {
+			if (players[i] == null) { players[i] = new Player(name, startingMoney); break; }
+		}
+	}
+	
 	
 	/* ROLL STUFF */
 	/**
@@ -60,9 +93,11 @@ public class Game {
 	public int roll() {
 		int roll1 = rollDice();
 		int roll2 = rollDice();
+		System.out.println("You rolled a " + roll1 + " and " + roll2 + ".");
 		if (roll1 == roll2) { currentPlayer.incrementNumOfDoubles(); currentPlayer.setRolledDoubles(true); }
 		else { currentPlayer.setRolledDoubles(false); }
 		if (currentPlayer.getNumOfDoubles() == 3) { return -1; }
+		System.out.println("Rolled a " + (roll1 + roll2));
 		return roll1 + roll2;
 	}
 	
@@ -84,7 +119,15 @@ public class Game {
 		currentPlayer.incrementSpace();
 		spacesMovedTo.add(currentPlayer.getOnSpace());
 		if (currentPlayer.getOnSpace() == 0) { currentPlayer.addMoney(200); }
+		System.out.println("On " + board.getSpace(currentPlayer.getOnSpace()).getName());
 		return currentPlayer.getOnSpace();
+	}
+	
+	public int movePlayer(int numSpaces) {
+		for (int i = 0; i < numSpaces - 1; i = i + 1) {
+			movePlayer();
+		}
+		return movePlayer();
 	}
 	
 	/**
@@ -149,6 +192,7 @@ public class Game {
 	 * returns the appropriate status bit for what happened from the effect.
 	 */
 	public int activateEffect() {
+		anotherEffect = false;
 		int playerOnSpace = currentPlayer.getOnSpace();
 		Space currentSpace = board.getSpace(playerOnSpace);
 		if (currentSpace instanceof BigSpace) { return activateEffect((BigSpace) currentSpace); }
@@ -164,16 +208,16 @@ public class Game {
 		if (bigSpace.getName().equals("Go")) { return Game.onGo; }
 		if (bigSpace.getName().equals("Jail")) { return Game.onJail; }
 		if (bigSpace.getName().equals("Free Parking")) { return Game.onFreeParking; }
-		putInJail(); return 13;
+		putInJail(); return Game.onGoToJail;
 	}
 	
 	/**
-	 * @param notProperty The NotPlayer the player is on.
+	 * @param notProperty The notProperty the player is on.
 	 * @return The appropriate status bit for what happens to the player.
 	 */
 	public int activateEffect(NotProperty notProperty) {
-		if (notProperty.getName().equals("Income Tax")) { currentPlayer.addMoney(-75); return Game.onIncome; }
-		if (notProperty.getName().equals("Luxury Tax")) { currentPlayer.addMoney(-200); return Game.onLuxury; } //***TODO: Decide which one the player wants to play
+		if (notProperty.getName().equals("Income Tax")) { currentPlayer.addMoney(-200); return Game.onIncome; }
+		if (notProperty.getName().equals("Luxury Tax")) { currentPlayer.addMoney(-75); return Game.onLuxury; } //***TODO: Decide which one the player wants to play
 		// [ Player landed on Chance or Community Chest ]
 		if (notProperty.getName().equals("Chance")) { return drawCard(false); }
 		return drawCard(true);
@@ -185,19 +229,20 @@ public class Game {
 	 */
 	public int drawCard(boolean cardType) {
 		drawnCard = board.removeCard(cardType);
-		
+		int space = drawnCard.getSpace();
 		if (drawnCard.getName().equals("Go to Jail")) { putInJail(); return Game.drewGoToJail; }
 		if (drawnCard.getName().equals("Advance to Go")) { currentPlayer.addMoney(200); currentPlayer.setSpace(0); return Game.drewGoToGo; }
 		if (drawnCard.getName().equals("Get Out of Jail Card")) { currentPlayer.incrementNumJailCard(); return Game.drewGetOutOfJailCard; }
-		if (drawnCard.getName().equals("Go Back")) { for (int i = 0; i < Math.abs(drawnCard.getSpace()); i = i + 1) { movePlayerBackwards(); } return Game.drewGoBack; }
+		if (drawnCard.getName().equals("Go Back")) { for (int i = 0; i < Math.abs(space); i = i + 1) { movePlayerBackwards(); } setAnotherEffect(true); return Game.drewGoBack; }
 		
 		if (drawnCard.isIncrement()) {
 			int spaceOrGroup = drawnCard.getSpace();
+			anotherEffect = true;
 			if (drawnCard.getSpace() < 40) { movePlayerToSpace(spaceOrGroup); return Game.drewMoveToSpace; }
 			movePlayerToGroup(spaceOrGroup); return Game.drewMoveToGroup;
 		}
 		
-		if (drawnCard.isIncrement() && drawnCard.getSpace() < 40) { this.setPlayerSpace(drawnCard.getSpace()); return Game.drewSetSpace; }
+		if (drawnCard.isIncrement() && drawnCard.getSpace() < 40) { anotherEffect = true; this.setPlayerSpace(drawnCard.getSpace()); return Game.drewSetSpace; }
 		
 		double totalReward =
 				drawnCard.getReward() + ((double) players.length) * drawnCard.getCostPerPerson() +
@@ -223,7 +268,8 @@ public class Game {
 		Property theProperty = (Property) board.getSpace(currentPlayer.getOnSpace());
 		if (!theProperty.isOwned()) { return Game.canBuy; }
 		if (theProperty.isMortgage()) { return Game.isMortgaged; }
-		currentPlayer.addMoney(property.getRentPrice()); return Game.paidMoney;
+		if (theProperty.getOwnedBy() == currentPlayer) { return Game.ownsProperty; }
+		theProperty.payRent(currentPlayer); setPaidMoneyTo(theProperty.getOwnedBy()); return Game.paidMoney;
 	}
 	
 	/* PROPERTY STUFF */
@@ -239,6 +285,15 @@ public class Game {
 		currentPlayer.addProperty(currentSpace);
 		currentProperty.setOwned(currentPlayer);
 		return Game.boughtProperty;
+	}
+	
+	/**
+	 * @param propertySpace Property to set auction mode on to.
+	 * Starts auction mode for the current property.
+	 */
+	public void auctionProperty(int propertySpace) {
+		Property toAuction = (Property) board.getSpace(propertySpace);
+		toAuction.setAuctionMode();
 	}
 	
 	/**
@@ -283,7 +338,9 @@ public class Game {
 		int maxHouses = -1;
 		//Check to see that all the properties in the group are owned by the current player
 		for (int i = 0; i < allPropertiesInGroup.length; i = i + 1) {
-			if (allPropertiesInGroup[i].getOwnedBy() != currentPlayer) { return Game.doesNotOwnAllPropertiesInGroup; }
+			if (allPropertiesInGroup[i].getOwnedBy() == null || allPropertiesInGroup[i].getOwnedBy() != currentPlayer) {
+				return Game.doesNotOwnAllPropertiesInGroup;
+			}
 			numHouses[i] = allPropertiesInGroup[i].getNumOfHouses();
 			if (numHouses[i] > maxHouses) { maxHouses = numHouses[i]; }
 		}
@@ -330,6 +387,32 @@ public class Game {
 	}
 	
 	
+	/* JAIL STUFF */
+	/**
+	 * @param toDo What choice to do.
+	 * @return The appropriate status bit for what happened
+	 */
+	public int inJail(int toDo) {
+		if (currentPlayer.getTimeInJail() == 3) { currentPlayer.setInJail(false); return Game.gotOutOfJail; } //***Force to pay or else cannot do stuff
+		switch (toDo) {
+			//Pay $50 to get out
+			case 0: if (currentPlayer.getMoney() < 50) { return Game.notEnoughMoney; } currentPlayer.addMoney(-50); currentPlayer.setInJail(false); return Game.gotOutOfJail;
+			//Roll dice for doubles
+			case 1: if (rollDice() == rollDice()) { currentPlayer.setInJail(false); return Game.gotOutOfJail; } currentPlayer.incrementTimeInJail(); return Game.stillInJail;
+			//Use out of jail card
+			case 2: if (currentPlayer.getOutOfJailCards() == 0) { return Game.doNotHaveJailCard; } currentPlayer.decrementNumJailCard(); currentPlayer.setInJail(false); return Game.gotOutOfJail;
+			default: return Game.notAValidOption;
+		}
+	}
+	
+	/**
+	 * @return True if still in jail; false otherwise.
+	 */
+	public boolean stillInJail() {
+		return (inJail(-999) == Game.gotOutOfJail ? false: true);
+	}
+	
+	
 	/* BANKRUPT STUFF */
 	public void declareBankrupt() {
 		//***TODO: declareBankrupt for this person.
@@ -354,13 +437,14 @@ public class Game {
 	
 	/* TURN STUFF */
 	public void nextTurn() {
-		do {
-			incrementTurn();
-		}
-		while (!players[getTurn()].getBankrupt());
+		Player before = currentPlayer;
+		resetVariables();
+		do { incrementTurn(); }
+		while (players[getTurn()].getBankrupt());
+		currentPlayer = players[turn];
+		if (before != null && currentPlayer == before) { Game.setGameWon(true); }
 	}
 	
-	//***TODO: Add the stuff to figure out whose turn, etc.
 	public int getTurn() {
 		return turn;
 	}
@@ -371,6 +455,45 @@ public class Game {
 	
 	public void incrementTurn() {
 		turn = (turn + 1) % players.length;
+	}
+	
+	public void resetVariables() {
+		spacesMovedTo = new LinkedList<Integer>();
+		drawnCard = null;
+		paidMoneyTo = null;
+		anotherEffect = false;
+	}
+
+	public Player getPaidMoneyTo() {
+		return paidMoneyTo;
+	}
+
+	public void setPaidMoneyTo(Player paidMoneyTo) {
+		this.paidMoneyTo = paidMoneyTo;
+	}
+
+	public boolean isAnotherEffect() {
+		return anotherEffect;
+	}
+
+	public void setAnotherEffect(boolean anotherEffect) {
+		this.anotherEffect = anotherEffect;
+	}
+
+	public static int getPlayerisbankrupt() {
+		return playerIsBankrupt;
+	}
+
+	public static boolean isGameWon() {
+		return gameWon;
+	}
+
+	public static void setGameWon(boolean gameWon) {
+		Game.gameWon = gameWon;
+	}
+	
+	public int numOfPlayers() {
+		return players.length;
 	}
 	
 	
